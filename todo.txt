@@ -1,0 +1,5 @@
+Create a 2D world that we can walk around using tank controls + strafing
+Implement collision detection
+
+Step out from the direction the player is facing and find the nearest wall in front of them
+Draw a vertical line on the screen at that X coordinate, the height corresponds to the distance to the wall
