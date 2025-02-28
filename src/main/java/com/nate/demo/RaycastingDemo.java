@@ -2,6 +2,7 @@ package com.nate.demo;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 
 public class RaycastingDemo {
@@ -10,7 +11,7 @@ public class RaycastingDemo {
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-        {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1},
         {1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1},
         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
         {1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -22,8 +23,8 @@ public class RaycastingDemo {
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
     };
 
-    double rotateSpeed = 0.03f;
-    double moveSpeed = 2.5f;
+    double rotateSpeed = 0.03;
+    double moveSpeed = 2;
 
     int mapHeight = worldMap.length;
     int mapWidth = worldMap[1].length;
@@ -65,7 +66,24 @@ public class RaycastingDemo {
     }
 
     private boolean insideWall(double x, double y) {
-        return (worldMap[(int) (y / 32)][(int) (x / 32)] == 1);
+        double padding = 3.5;
+        double x1 = x - padding;
+        double y1 = y - padding;
+        if (worldMap[(int) (y1 / 32)][(int) (x1 / 32)] == 1) return true;
+
+        double x2 = x + padding;
+        double y2 = y - padding;
+        if (worldMap[(int) (y2 / 32)][(int) (x2 / 32)] == 1) return true;
+
+        double x3 = x - padding;
+        double y3 = y + padding;
+        if (worldMap[(int) (y3 / 32)][(int) (x3 / 32)] == 1) return true;
+
+        double x4 = x + padding;
+        double y4 = y + padding;
+        if (worldMap[(int) (y4 / 32)][(int) (x4 / 32)] == 1) return true;
+
+        return false;
     }
 
     public void renderTopDown(Screen screen) {
@@ -87,12 +105,14 @@ public class RaycastingDemo {
         g.fillRect(0, 0, Main.SCREEN_WIDTH, Main.SCREEN_HEIGHT / 2);
         
         // Camera plane is perpendicular to direction vector
-        double planeX = -dirY * 0.66;
-        double planeY = dirX * 0.66;
-        
+        double fovInDegrees = 66.0;
+        double planeLength = Math.tan(Math.toRadians(fovInDegrees / 2));
+        double planeX = -dirY * planeLength;
+        double planeY = dirX * planeLength;
+
         for (int x = 0; x < Main.SCREEN_WIDTH; x++) {
-            // Calculate ray position and direction
-            double cameraX = 2 * x / (double) Main.SCREEN_WIDTH - 1; // x-coordinate in camera space
+            // Remove aspect ratio from here
+            double cameraX = 2 * x / (double) Main.SCREEN_WIDTH - 1;
             double rayDirX = dirX + planeX * cameraX;
             double rayDirY = dirY + planeY * cameraX;
             
@@ -164,6 +184,9 @@ public class RaycastingDemo {
                 } else {
                     perpWallDist = (mapY - posY / 32 + (1 - stepY) / 2) / rayDirY;
                 }
+
+                double correction = dirX * rayDirX + dirY * rayDirY;
+                perpWallDist *= correction;
                 
                 // Guard against zero or negative distance
                 if (perpWallDist <= 0) perpWallDist = 0.1;
